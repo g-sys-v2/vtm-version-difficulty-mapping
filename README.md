@@ -7,19 +7,19 @@
 With the release of 5th Edition, Vampire: The Masquerade (VTM) 
 introduced an entirely new system to determine the difficulty of 
 succeeding on rolls. Unfortunately, this means that not only are 
-certain features of the Old World of Darkness (OWOD) difficult
-to transfer to the new ruleset, but entire chronicles that use OWOD
+certain features of the old Revised Storyteller system (RS) difficult
+to transfer to the new ruleset, but entire chronicles that use RS
 rules are basically unusable for players that wish to use 5E.
 
 This project seeks to amend that by autonomously determining the 
-required 5E Difficulty given any OWOD roll (up to a dice pool of 20).
+required 5E Difficulty given any RS roll (up to a dice pool of 20).
 It also calculates the chance of success for each of these rolls for
-both the OWOD version and its 5E equivalent, for the players'
+both the RS version and its 5E equivalent, for the players'
 reference.
 
 ## Description
 
-According to OWOD rules, every roll that a player is asked to make 
+According to RS rules, every roll that a player is asked to make 
 follows the following setup: in order to pass a check, a player with
 a dice pool of `n` 10-sided die must roll `s` successes with a 
 Difficulty `d`, where a die roll is considered a success if it
@@ -35,19 +35,19 @@ to pass the check.
 5th Edition streamlines these requirements and redefines some terms.
 A typical 5E roll still has the player rolling `n` dice, but now the
 'Difficulty' is the number of successes required (equivalent to `s` in
-OWOD rules), and all die results are successful if they come up 6 or 
+RS rules), and all die results are successful if they come up 6 or 
 higher (meaning every die has a 50% chance of being a success).
 
 Despite the similarities in jargon, it is very difficult to directly
-map from one formula to the other. If a Storyteller is using an OWOD
+map from one formula to the other. If a Storyteller is using an RS
 chronicle that calls for the aforementioned `(n=5,s=3,d=7)` roll, what
 should they use for a 5E equivalent? The default response would either
 be to match the difficulty or the required number of successes, but
 some statistical testing will soon show that neither one is sufficient,
-and that in fact it may not be possible to map the OWOD roll to a 5E
+and that in fact it may not be possible to map the RS roll to a 5E
 roll with the same probability of success.
 
-The same goes for solving for 5E Difficulty given OWOD parameters 
+The same goes for solving for 5E Difficulty given RS parameters 
 (since the number of dice `n` is the same in both formulas). The 
 probability distribution formulas for each version's chance of success
 for a roll make it very difficult to do so without a
@@ -55,7 +55,7 @@ lot of approximation. Instead, this program tabulates the probability
 of success for every possible combination of parameters between both
 versions for a player dice pool of 1 to 20.
 
-### OWOD Roll Success Probability
+### RS Roll Success Probability
 
 The program calculates the probability of success for every single 
 combination of `(n,s,d)` such that `1<n<20`, `1<s<10`, and `1<d<10`.
@@ -67,18 +67,18 @@ single die is
 `(10-d+1)/10 = (11-d)/10`.
 
 
-The OWOD roll success probability for each roll is calculated as 
+The RS roll success probability for each roll is calculated as 
 follows:
 
 ```
 P(s_owod) = C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s)
  
- s.t.           
-        P(s_owod): The probability of passing a roll check
-        n: The number of dice
-        s: The required number of successes
-        d: The Difficulty as defined above for OWOD
-        C(n,s) = n!/(s! * (n-s)!)
+where
+    P(s_owod): The probability of passing a roll check
+    n: The number of dice
+    s: The required number of successes
+    d: The Difficulty as defined above for RS
+    C(n,s) = n!/(s! * (n-s)!)
 ```
 
 ### 5E Roll Success Probability
@@ -94,31 +94,31 @@ follows:
 ```
 P(s_5e) = C(n,d) * (1/2)**d * (1/2)**(n-d)
  
- s.t.           
-        P(s_5e): The probability of passing a roll check
-        n: The number of dice
-        d: The Difficulty as defined above for 5E
-        C(n,d) = n!/(d! * (n-d)!)
+where
+    P(s_5e): The probability of passing a roll check
+    n: The number of dice
+    d: The Difficulty as defined above for 5E
+    C(n,d) = n!/(d! * (n-d)!)
 ```
 
 ### Version Mapping
 
 Once these probabilities are tabulated, the program attempts to map
-every single entry in the OWOD probability table to an entry in the
+every single entry in the RS probability table to an entry in the
 5E table according to the number of dice being rolled.
 
-A Storyteller attempting to use an OWOD chronicle or other 
-feature using 5E rules will want to take a suggested OWOD roll and
+A Storyteller attempting to use an RS chronicle or other 
+feature using 5E rules will want to take a suggested RS roll and
 translate it into 5E terms. Thus, the Storyteller only needs to 
 derive the 5E Difficulty, since the number of dice being rolled is 
 the same. In order to simulate this, the program will take an entry 
-in the OWOD table, find an entry in the 5E table with the same 
+in the RS table, find an entry in the 5E table with the same 
 number of dice, and attempt to find a 5E Difficulty rating in the 
 5E set that results in a roll success probability that is as close
-as possible to that of the OWOD roll.
+as possible to that of the RS roll.
 
 Note: it is not always possible to map rolls such that the chance
-of success for the 5E roll is the same as for the OWOD roll. In these
+of success for the 5E roll is the same as for the RS roll. In these
 cases, the closest match is chosen.
 
 ## Requirements
@@ -137,15 +137,33 @@ git clone https://github.com/g-sys-v2/vtm-version-difficulty-mapping.git
 
 ```
 where
-    n: Number of dice being rolled in the OWOD roll
-    s: Number of successes required in the OWOD roll
-    d: OWOD Difficulty rating in the OWOD roll
+    n: Number of dice being rolled in the RS roll
+    s: Number of successes required in the RS roll
+    d: RS Difficulty rating in the RS roll
 ```
 
 The program will return the input parameters as well as the 
-probability of success for the OWOD roll using them, in addition to
+probability of success for the RS roll using them, in addition to
 the corresponding 5E Difficulty and the associated probability of 
 success.
+
+### Example
+
+`>python vtm_version_difficulty_mapping.py 5 3 7`
+
+result:
+
+```
+owod
+	parameters:
+		dice: 5
+		required successes: 3
+		difficulty: 7
+	success chance: 31.74%
+5e
+	difficulty: 4
+	success chance: 18.75%
+```
 
 
 

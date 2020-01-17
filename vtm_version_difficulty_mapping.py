@@ -36,13 +36,13 @@ def format_result(r):
     return round(r*100, 2)
 
 
-def p_owod(n, s, d):
+def p_rs(n, s, d):
     if n < s:
         return 0
-    return format_result(p_one_or_more(((DIE_MAX-d+1)/DIE_MAX), n, s))
+    return p_one_or_more(((DIE_MAX-d+1)/DIE_MAX), n, s)
 
 
-def get_p_dist_owod():
+def get_p_dist_rs():
     p_dist = {}
     for n in range(1, 21):
         if n not in p_dist:
@@ -53,7 +53,7 @@ def get_p_dist_owod():
             for d in range(1, 11):
                 if d not in p_dist[n][s]:
                     p_dist[n][s][d] = {}
-                result = p_owod(n, s, d)
+                result = p_rs(n, s, d)
                 p_dist[n][s][d] = result
     return p_dist
 
@@ -61,7 +61,7 @@ def get_p_dist_owod():
 def p_e5(n, d):
     if n < d:
         return 0
-    return format_result(p_one_or_more((1/2), n, d))
+    return p_one_or_more((1/2), n, d)
 
 
 def get_p_dist_e5():
@@ -77,21 +77,21 @@ def get_p_dist_e5():
     return p_dist
 
 
-def get_p_map(p_dist_owod, p_dist_e5):
+def get_p_map(p_dist_rs, p_dist_e5):
     p_map = {}
-    for n in p_dist_owod.keys():
+    for n in p_dist_rs.keys():
         if n not in p_map:
             p_map[n] = {}
-        for s in p_dist_owod[n].keys():
+        for s in p_dist_rs[n].keys():
             if s not in p_map[n]:
                 p_map[n][s] = {}
-            for d in p_dist_owod[n][s].keys():
+            for d in p_dist_rs[n][s].keys():
                 if d not in p_map[n][s]:
                     p_map[n][s][d] = {}
                 mapped_d = 1
-                min_diff = abs(p_dist_owod[n][s][d] - p_dist_e5[n][mapped_d])
+                min_diff = abs(p_dist_rs[n][s][d] - p_dist_e5[n][mapped_d])
                 for d_e5 in p_dist_e5[n]:
-                    diff = abs(p_dist_owod[n][s][d] - p_dist_e5[n][d_e5])
+                    diff = abs(p_dist_rs[n][s][d] - p_dist_e5[n][d_e5])
                     if diff < min_diff:
                         min_diff = diff
                         mapped_d = d_e5
@@ -99,9 +99,9 @@ def get_p_map(p_dist_owod, p_dist_e5):
     return p_map
 
 
-p_dist_owod = get_p_dist_owod()
+p_dist_rs = get_p_dist_rs()
 p_dist_e5 = get_p_dist_e5()
-p_map = get_p_map(p_dist_owod, p_dist_e5)
+p_map = get_p_map(p_dist_rs, p_dist_e5)
 
 help_statement = f"description:\n\tConverts a VTM V20 roll into a 5E roll. Returns required 5E " \
                  f"Difficulty for the given number of dice.\n"\
@@ -115,15 +115,15 @@ try:
     s = int(argv[2])
     d = int(argv[3])
     print(
-        f"owod\n"
+        f"rs\n"
         f"\tparameters:\n"
         f"\t\tdice: {n}\n"
         f"\t\trequired successes: {s}\n"
         f"\t\tdifficulty: {d}\n"
-        f"\tsuccess chance: {p_dist_owod[n][s][d]}%\n"
+        f"\tsuccess chance: {format_result(p_dist_rs[n][s][d])}%\n"
         f"5e\n"
-        f"\tdifficulty: {p_map[n][s][d]}\n"
-        f"\tsuccess chance: {p_dist_e5[n][p_map[n][s][d]]}%\n"
+        f"\tdifficulty: {format_result(p_map[n][s][d])}\n"
+        f"\tsuccess chance: {format_result(p_dist_e5[n][p_map[n][s][d]])}%\n"
     )
 except (SyntaxError, IndexError):
     print(help_statement)
