@@ -1,8 +1,13 @@
 """
+Vampire: The Masquerade™ Version Difficulty Mapper
+
 Tabulates roll success probabilities for Vampire: The Masquerade old and 5th edition rules.
 Maps old roll parameters to 5th edition ones and outputs the probability of success for both.
-<<<<<<< HEAD
+
+George T
+01/16/20
 """
+
 from sys import argv
 from math import factorial as fact
 
