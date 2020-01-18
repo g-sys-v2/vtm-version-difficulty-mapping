@@ -69,6 +69,8 @@ def get_p_dist_v20():
         if n not in p_dist:
             p_dist[n] = {}
         for s in range(1, 11):
+            if s > n:
+                break
             if s not in p_dist[n]:
                 p_dist[n][s] = {}
             for d in range(2, 11):
@@ -85,6 +87,8 @@ def get_p_dist_e5():
         if n not in p_dist:
             p_dist[n] = {}
         for d in range(1, 11):
+            if d > n:
+                break
             if d not in p_dist:
                 p_dist[n][d] = {}
             result = p_e5(n,d)
