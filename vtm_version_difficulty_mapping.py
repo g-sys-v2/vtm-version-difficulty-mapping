@@ -172,7 +172,7 @@ try:
         f"\t\tdifficulty: {d}\n"
         f"\tsuccess chance: {format_result(p_dist_v20[n][s][d])}%\n"
         f"5e\n"
-        f"\tdifficulty: {format_result(p_map[n][s][d])}\n"
+        f"\tdifficulty: {p_map[n][s][d]}\n"
         f"\tsuccess chance: {format_result(p_dist_e5[n][p_map[n][s][d]])}%\n"
     )
 except (SyntaxError, IndexError):
