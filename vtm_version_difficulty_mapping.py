@@ -8,6 +8,7 @@ George T
 01/16/20
 """
 
+import csv
 from sys import argv
 from math import factorial as fact
 
@@ -117,10 +118,30 @@ def format_result(r):
     return round(r*100, 2)
 
 
+def write_csv_v20(table, filename="v20.csv"):
+    with open(filename, "w") as f:
+        w = csv.writer(f)
+        w.writerow(["dice pool", "successes required", "v20 difficulty", "success probability"])
+        for n in table.keys():
+            for s in table[n].keys():
+                for d in table[n][s].keys():
+                    w.writerow([n, s, d, f"{format_result(table[n][s][d])}%"])
+
+
+def write_csv_e5(table, filename="5e.csv"):
+    with open(filename, "w") as f:
+        w = csv.writer(f)
+        w.writerow(["dice pool", "5e difficulty", "success probability"])
+        for n in table.keys():
+            for d in table[n].keys():
+                w.writerow([n, d, f"{format_result(table[n][d])}%"])
+
+
 help_statement = f"description:\n\tConverts a VTM V20 roll into a 5E roll. Returns required 5E " \
                  f"Difficulty for the given number of dice.\n"\
                  f"usage:\n\tpython vtm_version_difficulty_mapping.py "\
                  f"<number of dice> <successes required> <difficulty>\n"
+
 if len(argv) == 1 or argv[1] == "-h" or argv[1] == "h":
     print(help_statement)
     exit()
@@ -129,9 +150,16 @@ try:
     p_dist_v20 = get_p_dist_v20()
     p_dist_e5 = get_p_dist_e5()
     p_map = get_p_map(p_dist_v20, p_dist_e5)
+
+    if argv[1] == "--csv":
+        write_csv_v20(p_dist_v20)
+        write_csv_e5(p_dist_e5)
+        exit()
+
     n = int(argv[1])
     s = int(argv[2])
     d = int(argv[3])
+
     print(
         f"rs\n"
         f"\tparameters:\n"
