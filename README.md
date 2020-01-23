@@ -68,7 +68,7 @@ follows. Note the combination term:
 The program calculates the probability of success for every single 
 combination of `(n,s,d)` such that `1<=n<=20`, `1<=s<=10`, and `1<=d<=10`.
 Results for larger dice pools are omitted because they are unusual
-in everyday gameplay. These success probabilites are modeled as a
+in everyday gameplay. These success probabilities are modeled as a
 cumulative binomial distribution where the chance of success on a 
 single die is 
 
@@ -107,7 +107,7 @@ where
 ``` 
 
 This results in a final OWOD roll success probability modeled as the
-sum of the probabiblities of getting exactly the required number of 
+sum of the probabilities of getting exactly the required number of 
 successes or more and not having those successes negated by 1s:
 
 ```
@@ -124,7 +124,7 @@ where
 
 The program calculates the probability of success for every single 
 combination of `(n,d)` such that `1<=n<=20` and `1<=d<=10`.
-These success probabilites are modeled as a cumulative binomial 
+These success probabilities are modeled as a cumulative binomial 
 distribution where the chance of success on a single die is `1/2`.
 
 The base 5E roll success probability for each roll is calculated as 
