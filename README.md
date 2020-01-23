@@ -66,7 +66,7 @@ follows. Note the combination term:
 ### OWOD Roll Success Probability
 
 The program calculates the probability of success for every single 
-combination of `(n,s,d)` such that `1<n<20`, `1<s<10`, and `1<d<10`.
+combination of `(n,s,d)` such that `1<=n<=20`, `1<=s<=10`, and `1<=d<=10`.
 Results for larger dice pools are omitted because they are unusual
 in everyday gameplay. These success probabilites are modeled as a
 cumulative binomial distribution where the chance of success on a 
@@ -95,10 +95,10 @@ none of the failure results are 1s. This itself is a (negative)
 cumulative binomial distribution formulated as follows:
 
 ```
-P(owod_no_1s) = sum(x-s+1, n-x+1, 1 - P(owod_one_or_more_1s))
+P(owod_no_1s) = sum(x-s+1, n-x, 1 - P(owod_one_or_more_1s))
+              = sum(x-s+1, n-x, 1 - C(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y)))
 
 where
-    P(owod_one_or_more_1s) = C(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y))
     n: The number of dice
     s: The required number of successes
     d: The Difficulty as defined above for OWOD
@@ -112,11 +112,8 @@ successes or more and not having those successes negated by 1s:
 
 ```
 P(owod_success) = sum(x=s, n+1, P(owod_base_success) * P(owod_no_1s))
-                = sum(x=s, n+1, (C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s))
-                  * sum(y=x-s+1, n-x+1, 1 - P(owod_one_or_more_1s)))
-                = sum(x=s, n+1, (C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s))
-                  * sum(y=x-s+1, n-x+1, 
-                        1 - C(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y))))
+                = sum(x=s, n+1, (C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s)) * sum(y=x-s+1, n-x+1, 1 - P(owod_one_or_more_1s)))
+                = sum(x=s, n, (C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s)) * sum(y=x-s+1, n-x+1, 1 - C(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y))))
 where
     n: The number of dice
     s: The required number of successes
@@ -126,7 +123,7 @@ where
 ### 5E Roll Success Probability
 
 The program calculates the probability of success for every single 
-combination of `(n,d)` such that `1<n<20` and `1<d<10`.
+combination of `(n,d)` such that `1<=n<=20` and `1<=d<=10`.
 These success probabilites are modeled as a cumulative binomial 
 distribution where the chance of success on a single die is `1/2`.
 
@@ -142,8 +139,8 @@ where
 ```
 
 In addition to this, 5E rules specify that every pair of 10s rolled
-counts as four successes, instead of two. This is modeled by applying
-to every base success probability the probability of an alternative
+counts as four successes instead of two. This is modeled by applying
+to every base success probability the probability of an alternative roll
 which is a failure unless the doubling 10s rule is applied. For
 example, a roll of 7 dice at Difficulty 5 that results in only 3 
 successes is a base failure. However, if 2 of those 3 dice are 10s,
@@ -164,16 +161,8 @@ The additional probability of an overall success with one or more
 pairs of 10s that would otherwise be a failure is calculated as follows:
 
 ```
-P(5e_failure_but_for_10s) = sum(t=2, even(d),
-                                 P(t_10s) 
-                                 * sum(max(0, d-2*t), d-t-1,
-                                       P(s_non_10_successes) 
-                                       * P(rest_are_failures)))
-                          = sum(t=2, even(d),
-                                 C(d, t) * ((1/DIE_MAX)**t) 
-                                 * sum(max(0, d-2*t), d-t-1,
-                                       * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
-                                       * ((P_SUCCESS_E5)**(n-t-s))))
+P(5e_failure_but_for_10s) = sum(t=2, even(d), P(t_10s) * sum(max(0, d-2*t), d-t-1, P(s_non_10_successes) * P(rest_are_failures)))
+                          = sum(t=2, even(d), C(d, t) * ((1/10)**t) * sum(max(0, d-2*t), d-t-1, C(d-t, s) * ((1/2-1/10)**s) * ((1/2)**(n-t-s))))
 where
     n: The number of dice
     d: The Difficulty as defined above for 5E
@@ -184,12 +173,8 @@ where
 Thus the final success probability is:
 
 ```
-P(5e_success) = sum(d, n+1, P(5e_base_success) + P(5e_failure_but_for_10s))
-              = sum(d, n+1, C(n,d) * (1/2)**d * (1/2)**(n-d)
-                            + sum(t=2, even(d), C(d, t) * ((1/DIE_MAX)**t) 
-                                                * sum(max(0, d-2*t), d-t-1,
-                                                      * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
-                                                      * ((P_SUCCESS_E5)**(n-t-s))))
+P(5e_success) = sum(d, n, P(5e_base_success) + P(5e_failure_but_for_10s))
+              = sum(d, n, C(n,d) * (1/2)**d * (1/2)**(n-d) + sum(t=2, even(d), C(d, t) * ((1/10)**t) * sum(max(0, d-2*t), d-t-1, C(d-t, s) * ((1/2-1/10)**s) * ((1/2)**(n-t-s))))
 ```
 
 ### Version Mapping
@@ -223,14 +208,15 @@ git clone https://github.com/g-sys-v2/vtm-version-difficulty-mapping.git
 ```
 
 ## Run
-
-`python vtm_version_difficulty_mapping.py <n> <s> <d>`
-
 ```
-where
-    n: Number of dice being rolled in the OWOD roll
-    s: Number of successes required in the OWOD roll
-    d: OWOD Difficulty rating for the OWOD roll
+python vtm_version_difficulty_mapping.py [-n number_of_dice -s required_successes -d owod_difficulty] | [--csv] | [-h | --help]
+
+options
+    -n: Number of dice being rolled in the OWOD roll
+    -s: Number of successes required in the OWOD roll
+    -d: OWOD Difficulty rating for the OWOD roll
+    --csv: Write all tables out as local CSV files
+    -h, --help: Print help statement
 ```
 
 The program will return the input parameters as well as the 
@@ -240,20 +226,23 @@ success.
 
 ### Example
 
-`>python vtm_version_difficulty_mapping.py 5 3 7`
+To take an OWOD roll involving 5 dice which requires 3 successes at Difficulty 7 and find the
+5E Difficulty for an equivalent roll using 5E rules:
+
+`> python vtm_version_difficulty_mapping.py -n 5 -s 3 -d 7`
 
 result:
 
 ```
-v20
-	parameters:
-		dice: 5
-		required successes: 3
-		difficulty: 7
-	success chance: 31.74%
+owod
+	dice: 5
+	required successes: 3
+	difficulty: 7
+	success chance: 24.88%
 5e
+	dice: 5
 	difficulty: 4
-	success chance: 18.75%
+	success chance: 22.65%
 ```
 
 

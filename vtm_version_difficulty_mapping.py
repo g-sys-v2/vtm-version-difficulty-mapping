@@ -174,36 +174,40 @@ help_statement = f"\n" \
                  f"\t--csv:\tWrite probability tables in CSV format.\n" \
                  f"\th, -h --help:\tPrint this message.\n"
 
-if len(argv) == 1 or argv[1] in ["h", "-h", "--help"]:
+write = False
+n = None
+s = None
+d = None
+if len(argv) == 1 or any(arg in argv for arg in ["h", "-h", "--help"]):
     print(help_statement)
     exit()
+if "--csv" in argv:
+    write = True
+if all(arg in argv for arg in ["-n", "-s", "-d"]):
+    n = int(argv[argv.index("-n")+1])
+    s = int(argv[argv.index("-s")+1])
+    d = int(argv[argv.index("-d")+1])
 
 try:
     p_dist_owod = get_p_dist_owod()
     p_dist_e5 = get_p_dist_e5()
     p_map = get_p_map(p_dist_owod, p_dist_e5)
-
-    if argv[1] == "--csv":
+    if write:
         write_csv_owod(p_dist_owod)
         write_csv_e5(p_dist_e5)
         write_csv_map(p_map)
-        exit()
-
-    n = int(argv[1])
-    s = int(argv[2])
-    d = int(argv[3])
-
-    print(
-        f"\n"
-        f"owod\n"
-        f"\tdice: {n}\n"
-        f"\trequired successes: {s}\n"
-        f"\tdifficulty: {d}\n"
-        f"\tsuccess chance: {format_result(p_dist_owod[n][s][d])}%\n"
-        f"5e\n"
-        f"\tdice: {n}\n"
-        f"\tdifficulty: {p_map[n][s][d]}\n"
-        f"\tsuccess chance: {format_result(p_dist_e5[n][p_map[n][s][d]])}%\n"
-    )
+    else:
+        print(
+            f"\n"
+            f"owod\n"
+            f"\tdice: {n}\n"
+            f"\trequired successes: {s}\n"
+            f"\tdifficulty: {d}\n"
+            f"\tsuccess chance: {format_result(p_dist_owod[n][s][d])}%\n"
+            f"5e\n"
+            f"\tdice: {n}\n"
+            f"\tdifficulty: {p_map[n][s][d]}\n"
+            f"\tsuccess chance: {format_result(p_dist_e5[n][p_map[n][s][d]])}%\n"
+        )
 except (SyntaxError, IndexError):
     print(help_statement)
