@@ -13,6 +13,7 @@ from sys import argv
 from math import factorial as fact
 
 DIE_MAX = 10
+P_SUCCESS_E5 = 1/2
 
 
 def c(n, x):
@@ -27,14 +28,7 @@ def binomial(p, n, x):
     return c(n, x)*(p**x)*((1-p)**(n-x))
 
 
-def p_one_or_more(p, n, s):
-    result = 0
-    for x in range(s, n+1):
-        result += binomial(p, n, x)
-    return result
-
-
-def p_owod_crit_fail(n, s, d, x, y):
+def p_owod_cancelling_ones(n, s, d, x, y):
     if n == x:
         return 1.0
     if x < s:
@@ -42,24 +36,43 @@ def p_owod_crit_fail(n, s, d, x, y):
     return c(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y))
 
 
+def p_owod_cancelling_ones_cum(n, s, d, x):
+    result = 1
+    for y in range(x-s+1, n-x+1):
+        if y > n - x:
+            break
+        result *= 1 - p_owod_cancelling_ones(n, s, d, x, y)
+    return result
+
+
 def p_owod(n, s, d):
     if n < s:
         return 0
     result = 0
     for x in range(s, n+1):
-        inter_result = binomial((DIE_MAX-d+1)/DIE_MAX, n, x)
-        for y in range(x-s+1, n-x+1):
-            if y > n-x:
-                break
-            inter_result *= 1 - p_crit_fail(n, s, d, x, y)
-        result += inter_result
+        result += binomial((DIE_MAX-d+1)/DIE_MAX, n, x)*p_owod_cancelling_ones_cum(n, s, d, x)
+    return result
+
+
+def p_e5_double_tens(n, d, t, x):
+    return c(d, t)*((1/DIE_MAX)**t)*c(d-t, x)*((P_SUCCESS_E5-1/DIE_MAX)**x)*((1-P_SUCCESS_E5)**(n-t-x))
+
+
+def p_e5_double_tens_cum(n, d):
+    result = 0
+    for t in range(2, d, 2):
+        for x in range(max(0, d-2*t), d-t-1+1):
+            result += p_e5_double_tens(n, d, t, x)
     return result
 
 
 def p_e5(n, d):
     if n < d:
         return 0
-    return p_one_or_more((1/2), n, d)
+    result = 0
+    for x in range(d, n+1):
+        result += binomial(P_SUCCESS_E5, n, x) + p_e5_double_tens_cum(n, d)
+    return result
 
 
 def get_p_dist_owod():
@@ -140,10 +153,26 @@ def write_csv_e5(table, filename="5e.csv"):
                 w.writerow([n, d, f"{format_result(table[n][d])}%"])
 
 
-help_statement = f"description:\n\tConverts a VTM V20 roll into a 5E roll. Returns required 5E " \
-                 f"Difficulty for the given number of dice.\n"\
-                 f"usage:\n\tpython vtm_version_difficulty_mapping.py "\
-                 f"<number of dice> <successes required> <difficulty>\n"
+def write_csv_map(table, filename="mapping.csv"):
+    with open(filename, "w") as f:
+        w = csv.writer(f)
+        w.writerow(["dice pool", "successes required", "owod difficulty", "5e difficulty"])
+        for n in table.keys():
+            for s in table[n].keys():
+                for d in table[n][s].keys():
+                    w.writerow([n, s, d, table[n][s][d]])
+
+
+help_statement = f"\n" \
+                 f"description:\n" \
+                 f"\tConverts a VTM OWOD (V20) roll into a 5E roll.\n" \
+                 f"\tReturns required 5E Difficulty for the given number of dice.\n"\
+                 f"usage:\n" \
+                 f"\tpython vtm_version_difficulty_mapping.py "\
+                 f"<number of dice> <successes required> <difficulty>\n" \
+                 f"options:\n" \
+                 f"\t--csv:\tWrite probability tables in CSV format.\n" \
+                 f"\th, -h --help:\tPrint this message.\n"
 
 if len(argv) == 1 or argv[1] in ["h", "-h", "--help"]:
     print(help_statement)
@@ -157,6 +186,7 @@ try:
     if argv[1] == "--csv":
         write_csv_owod(p_dist_owod)
         write_csv_e5(p_dist_e5)
+        write_csv_map(p_map)
         exit()
 
     n = int(argv[1])
@@ -164,13 +194,14 @@ try:
     d = int(argv[3])
 
     print(
-        f"rs\n"
-        f"\tparameters:\n"
-        f"\t\tdice: {n}\n"
-        f"\t\trequired successes: {s}\n"
-        f"\t\tdifficulty: {d}\n"
+        f"\n"
+        f"owod\n"
+        f"\tdice: {n}\n"
+        f"\trequired successes: {s}\n"
+        f"\tdifficulty: {d}\n"
         f"\tsuccess chance: {format_result(p_dist_owod[n][s][d])}%\n"
         f"5e\n"
+        f"\tdice: {n}\n"
         f"\tdifficulty: {p_map[n][s][d]}\n"
         f"\tsuccess chance: {format_result(p_dist_e5[n][p_map[n][s][d]])}%\n"
     )

@@ -56,6 +56,13 @@ lot of approximation. Instead, this program tabulates the probability
 of success for every possible combination of parameters between both
 versions for a player dice pool of 1 to 20.
 
+## Implementation
+
+The probability calculations and mapping algorithm are implemented as
+follows. Note the combination term:
+
+`C(n, x) = n!/(x! * (n-x)!)`
+
 ### OWOD Roll Success Probability
 
 The program calculates the probability of success for every single 
@@ -68,18 +75,52 @@ single die is
 `(10-d+1)/10 = (11-d)/10`.
 
 
-The OWOD roll success probability for each roll is calculated as 
+The base OWOD roll success probability for each roll such that the 
+number of successes is exactly that which is required is calculated as 
 follows:
 
 ```
-P(s_owod) = C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s)
- 
+P(owod_base_success) = C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s)
+
 where
-    P(s_owod): The probability of passing a roll check
     n: The number of dice
     s: The required number of successes
     d: The Difficulty as defined above for OWOD
-    C(n,s) = n!/(s! * (n-s)!)
+```
+
+In addition to this, OWOD (V20) rules specify that any 1s rolled in
+this manner cancel out any success results. To model this, each 
+success probability is further augmented by the probability that
+none of the failure results are 1s. This itself is a (negative) 
+cumulative binomial distribution formulated as follows:
+
+```
+P(owod_no_1s) = sum(x-s+1, n-x+1, 1 - P(owod_one_or_more_1s))
+
+where
+    P(owod_one_or_more_1s) = C(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y))
+    n: The number of dice
+    s: The required number of successes
+    d: The Difficulty as defined above for OWOD
+    x: The number of successes for this iteration
+    y: The number of 1s for this iteration
+``` 
+
+This results in a final OWOD roll success probability modeled as the
+sum of the probabiblities of getting exactly the required number of 
+successes or more and not having those successes negated by 1s:
+
+```
+P(owod_success) = sum(x=s, n+1, P(owod_base_success) * P(owod_no_1s))
+                = sum(x=s, n+1, (C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s))
+                  * sum(y=x-s+1, n-x+1, 1 - P(owod_one_or_more_1s)))
+                = sum(x=s, n+1, (C(n,s) * ((11-d)/10)**s * (1-(11-d)/10)**(n-s))
+                  * sum(y=x-s+1, n-x+1, 
+                        1 - C(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y))))
+where
+    n: The number of dice
+    s: The required number of successes
+    d: The Difficulty as defined above for OWOD
 ```
 
 ### 5E Roll Success Probability
@@ -89,17 +130,66 @@ combination of `(n,d)` such that `1<n<20` and `1<d<10`.
 These success probabilites are modeled as a cumulative binomial 
 distribution where the chance of success on a single die is `1/2`.
 
-The 5E roll success probability for each roll is calculated as 
+The base 5E roll success probability for each roll is calculated as 
 follows:
 
 ```
-P(s_5e) = C(n,d) * (1/2)**d * (1/2)**(n-d)
+P(5e_base_success) = C(n,d) * (1/2)**d * (1/2)**(n-d)
  
 where
-    P(s_5e): The probability of passing a roll check
     n: The number of dice
     d: The Difficulty as defined above for 5E
-    C(n,d) = n!/(d! * (n-d)!)
+```
+
+In addition to this, 5E rules specify that every pair of 10s rolled
+counts as four successes, instead of two. This is modeled by applying
+to every base success probability the probability of an alternative
+which is a failure unless the doubling 10s rule is applied. For
+example, a roll of 7 dice at Difficulty 5 that results in only 3 
+successes is a base failure. However, if 2 of those 3 dice are 10s,
+then the final result is actually 5 successes and the roll is an
+overall success.
+
+The logic whereby this term is derived is implemented as a deterministic
+calculation based on finding every combination wherein the 
+number of total successes is less than the Difficulty (regardless of
+the number of dice being rolled), but one or more pair of successes
+are 10s. In computational terms, the algorithm starts with the 
+probability that the roll contains 1 pair of 10s, then calculates the
+probability of success such that the number of 10s and non-10 successes
+is at most 1 less than the Difficulty while still being an overall
+success. This is repeated for every possible number of pairs of 10s.
+
+The additional probability of an overall success with one or more
+pairs of 10s that would otherwise be a failure is calculated as follows:
+
+```
+P(5e_failure_but_for_10s) = sum(t=2, even(d),
+                                 P(t_10s) 
+                                 * sum(max(0, d-2*t), d-t-1,
+                                       P(s_non_10_successes) 
+                                       * P(rest_are_failures)))
+                          = sum(t=2, even(d),
+                                 C(d, t) * ((1/DIE_MAX)**t) 
+                                 * sum(max(0, d-2*t), d-t-1,
+                                       * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
+                                       * ((P_SUCCESS_E5)**(n-t-s))))
+where
+    n: The number of dice
+    d: The Difficulty as defined above for 5E
+    t: The number of 10s
+    s: The number of other successes rolled
+```
+
+Thus the final success probability is:
+
+```
+P(5e_success) = sum(d, n+1, P(5e_base_success) + P(5e_failure_but_for_10s))
+              = sum(d, n+1, C(n,d) * (1/2)**d * (1/2)**(n-d)
+                            + sum(t=2, even(d), C(d, t) * ((1/DIE_MAX)**t) 
+                                                * sum(max(0, d-2*t), d-t-1,
+                                                      * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
+                                                      * ((P_SUCCESS_E5)**(n-t-s))))
 ```
 
 ### Version Mapping
