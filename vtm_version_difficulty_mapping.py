@@ -177,7 +177,7 @@ help_statement = f"\n" \
                  f"\t-n: Number of dice being rolled in the OWOD roll.\n" \
                  f"\t-s: Number of successes required in the OWOD roll.\n" \
                  f"\t-d: OWOD Difficulty rating for the OWOD roll.\n" \
-                 f"\t-N: Maximum dice pool size for tabulation. Will default to n if -n is specified is greater.\n" \
+                 f"\t-N: Maximum dice pool size for tabulation. Will default to n if -n is specified and greater.\n" \
                  f"\t-w, --write: Write probability tables in CSV format.\n" \
                  f"\t-h --help: Print this message.\n"
 

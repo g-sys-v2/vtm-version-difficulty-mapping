@@ -215,7 +215,7 @@ options
     -n: Number of dice being rolled in the OWOD roll.
     -s: Number of successes required in the OWOD roll.
     -d: OWOD Difficulty rating for the OWOD roll.
-    -N: Maximum dice pool size for tabulation. Will default to n if -n is specified is greater. 
+    -N: Maximum dice pool size for tabulation. Will default to n if -n is specified and greater. 
     -w, --write: Write all tables out as local CSV files.
     -h, --help: Print help statement.
 ```
