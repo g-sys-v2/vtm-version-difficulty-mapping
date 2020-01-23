@@ -14,6 +14,7 @@ from math import factorial as fact
 
 DIE_MAX = 10
 P_SUCCESS_E5 = 1/2
+DICE_POOL_MAX_DEFAULT = 20
 
 
 def c(n, x):
@@ -75,9 +76,9 @@ def p_e5(n, d):
     return result
 
 
-def get_p_dist_owod():
+def get_p_dist_owod(n_max):
     p_dist = {}
-    for n in range(1, 21):
+    for n in range(1, n_max+1):
         if n not in p_dist:
             p_dist[n] = {}
         for s in range(1, 11):
@@ -93,9 +94,9 @@ def get_p_dist_owod():
     return p_dist
 
 
-def get_p_dist_e5():
+def get_p_dist_e5(n_max):
     p_dist = {}
-    for n in range(1, 21):
+    for n in range(1, n_max+1):
         if n not in p_dist:
             p_dist[n] = {}
         for d in range(1, 11):
@@ -169,34 +170,45 @@ help_statement = f"\n" \
                  f"\tReturns required 5E Difficulty for the given number of dice.\n"\
                  f"usage:\n" \
                  f"\tpython vtm_version_difficulty_mapping.py "\
-                 f"<number of dice> <successes required> <difficulty>\n" \
+                 f"[-n dice -s successes_required -d owod_difficulty] " \
+                 f"| [-w | --write] " \
+                 f"| [-h | --help]\n"\
                  f"options:\n" \
-                 f"\t--csv:\tWrite probability tables in CSV format.\n" \
-                 f"\th, -h --help:\tPrint this message.\n"
+                 f"\t-n: Number of dice being rolled in the OWOD roll.\n" \
+                 f"\t-s: Number of successes required in the OWOD roll.\n" \
+                 f"\t-d: OWOD Difficulty rating for the OWOD roll.\n" \
+                 f"\t-N: Maximum dice pool size for tabulation. Will default to n if -n is specified is greater.\n" \
+                 f"\t-w, --write: Write probability tables in CSV format.\n" \
+                 f"\t-h --help: Print this message.\n"
 
 write = False
+n_max = DICE_POOL_MAX_DEFAULT
 n = None
 s = None
 d = None
-if len(argv) == 1 or any(arg in argv for arg in ["h", "-h", "--help"]):
+if len(argv) == 1 or any(arg in argv for arg in ["-h", "--help"]):
     print(help_statement)
     exit()
 if any(arg in argv for arg in ["-w", "--write"]):
     write = True
+if "-N" in argv:
+    n_max = int(argv[argv.index("-N")+1])
 if all(arg in argv for arg in ["-n", "-s", "-d"]):
     n = int(argv[argv.index("-n")+1])
     s = int(argv[argv.index("-s")+1])
     d = int(argv[argv.index("-d")+1])
+    if n > n_max:
+        n_max = n
 
 try:
-    p_dist_owod = get_p_dist_owod()
-    p_dist_e5 = get_p_dist_e5()
+    p_dist_owod = get_p_dist_owod(n_max)
+    p_dist_e5 = get_p_dist_e5(n_max)
     p_map = get_p_map(p_dist_owod, p_dist_e5)
     if write:
         write_csv_owod(p_dist_owod)
         write_csv_e5(p_dist_e5)
         write_csv_map(p_map)
-    else:
+    if all(arg is not None for arg in [n, s, n]):
         print(
             f"\n"
             f"owod\n"
