@@ -54,20 +54,15 @@ def p_owod(n, s, d):
     return result
 
 
-def p_e5_double_tens(n, d, t, s):
-    return c(d, t)*((1/DIE_MAX)**t)*c(d-t, s)*((P_SUCCESS_E5-1/DIE_MAX)**s)*((P_SUCCESS_E5)**(n-t-s))
+def p_e5_double_tens(n, d, t, x):
+    return c(d, t)*((1/DIE_MAX)**t)*c(d-t, x)*((P_SUCCESS_E5-1/DIE_MAX)**x)*((1-P_SUCCESS_E5)**(n-t-x))
 
 
 def p_e5_double_tens_cum(n, d):
     result = 0
-    t = 2
-    s = d-t-1
-    while s >= 0:
-        result += p_e5_double_tens(n, d, t, s)
-        s -= 1
-        if 2*t+s < d:
-            t += 2
-            s -= 2
+    for t in range(2, d, 2):
+        for x in range(max(0, d-2*t), d-t-1+1):
+            result += p_e5_double_tens(n, d, t, x)
     return result
 
 

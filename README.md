@@ -155,35 +155,30 @@ calculation based on finding every combination wherein the
 number of total successes is less than the Difficulty (regardless of
 the number of dice being rolled), but one or more pair of successes
 are 10s. In computational terms, the algorithm starts with the 
-probability that the roll is 1 die short of an overall success 
-(Difficulty - 1), that at least one pair of successes are 10s, and
-that the rest of the dice are all failures. It then adds the probability
-that there are (Difficulty - 2) successes, and so on.
-If necessary, the algorithm will continue this calculation with an
-additional pair of 10s, and will keep doing so until no further
-successful rolls matching the aforementioned conditions are possible.
-
-Note that this approach also normalizes every pair of duplicate rolls 
-where the overall number of successes is equal but the number of 10s
-is not. This is necessitated by the fact that the probability of a non-10 
-success is calculated as the probability of a general success, which
-is possibly a 10. The reason for this implementation is that it is
-more efficient than simply calculating every possible combination of
-successes with every possible number of pairs of 10s.
+probability that the roll contains 1 pair of 10s, then calculates the
+probability of success such that the number of 10s and non-10 successes
+is at most 1 less than the Difficulty while still being an overall
+success. This is repeated for every possible number of pairs of 10s.
 
 The additional probability of an overall success with one or more
 pairs of 10s that would otherwise be a failure is calculated as follows:
 
 ```
-P(5e_failure_but_for_10s) = sum((t=2, s=d-t-1), (d/2, 0),
+P(5e_failure_but_for_10s) = sum(t=2, even(d),
+                                 P(t_10s) 
+                                 * sum(max(0, d-2*t), d-t-1,
+                                       P(s_non_10_successes) 
+                                       * P(rest_are_failures)))
+                          = sum(t=2, even(d),
                                  C(d, t) * ((1/DIE_MAX)**t) 
-                                 * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
-                                 * ((P_SUCCESS_E5)**(n-t-s)))
+                                 * sum(max(0, d-2*t), d-t-1,
+                                       * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
+                                       * ((P_SUCCESS_E5)**(n-t-s))))
 where
     n: The number of dice
     d: The Difficulty as defined above for 5E
     t: The number of 10s
-    s: The number of other successes rolled (possibly also 10s)
+    s: The number of other successes rolled
 ```
 
 Thus the final success probability is:
@@ -191,10 +186,10 @@ Thus the final success probability is:
 ```
 P(5e_success) = sum(d, n+1, P(5e_base_success) + P(5e_failure_but_for_10s))
               = sum(d, n+1, C(n,d) * (1/2)**d * (1/2)**(n-d)
-                            + sum((t=2, s=d-t-1), (d/2, 0),
-                                  C(d, t) * ((1/DIE_MAX)**t) 
-                                  * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
-                                  * ((P_SUCCESS_E5)**(n-t-s))))
+                            + sum(t=2, even(d), C(d, t) * ((1/DIE_MAX)**t) 
+                                                * sum(max(0, d-2*t), d-t-1,
+                                                      * C(d-t, s) * ((P_SUCCESS_E5-1/DIE_MAX)**s) 
+                                                      * ((P_SUCCESS_E5)**(n-t-s))))
 ```
 
 ### Version Mapping
