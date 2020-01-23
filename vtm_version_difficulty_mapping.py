@@ -34,7 +34,7 @@ def p_one_or_more(p, n, s):
     return result
 
 
-def p_crit_fail(n, s, d, x, y):
+def p_owod_crit_fail(n, s, d, x, y):
     if n == x:
         return 1.0
     if x < s:
@@ -42,10 +42,9 @@ def p_crit_fail(n, s, d, x, y):
     return c(n-x, y)*((1/(d-1))**(y))*((1-(1/(d-1)))**(n-x-y))
 
 
-def p_v20(n, s, d):
+def p_owod(n, s, d):
     if n < s:
         return 0
-    #return p_one_or_more(((DIE_MAX-d+1)/DIE_MAX), n, s)
     result = 0
     for x in range(s, n+1):
         inter_result = binomial((DIE_MAX-d+1)/DIE_MAX, n, x)
@@ -63,7 +62,7 @@ def p_e5(n, d):
     return p_one_or_more((1/2), n, d)
 
 
-def get_p_dist_v20():
+def get_p_dist_owod():
     p_dist = {}
     for n in range(1, 21):
         if n not in p_dist:
@@ -76,7 +75,7 @@ def get_p_dist_v20():
             for d in range(2, 11):
                 if d not in p_dist[n][s]:
                     p_dist[n][s][d] = {}
-                result = p_v20(n, s, d)
+                result = p_owod(n, s, d)
                 p_dist[n][s][d] = result
     return p_dist
 
@@ -96,21 +95,21 @@ def get_p_dist_e5():
     return p_dist
 
 
-def get_p_map(p_dist_v20, p_dist_e5):
+def get_p_map(p_dist_owod, p_dist_e5):
     p_map = {}
-    for n in p_dist_v20.keys():
+    for n in p_dist_owod.keys():
         if n not in p_map:
             p_map[n] = {}
-        for s in p_dist_v20[n].keys():
+        for s in p_dist_owod[n].keys():
             if s not in p_map[n]:
                 p_map[n][s] = {}
-            for d in p_dist_v20[n][s].keys():
+            for d in p_dist_owod[n][s].keys():
                 if d not in p_map[n][s]:
                     p_map[n][s][d] = {}
                 mapped_d = 1
-                min_diff = abs(p_dist_v20[n][s][d] - p_dist_e5[n][mapped_d])
+                min_diff = abs(p_dist_owod[n][s][d] - p_dist_e5[n][mapped_d])
                 for d_e5 in p_dist_e5[n]:
-                    diff = abs(p_dist_v20[n][s][d] - p_dist_e5[n][d_e5])
+                    diff = abs(p_dist_owod[n][s][d] - p_dist_e5[n][d_e5])
                     if diff < min_diff:
                         min_diff = diff
                         mapped_d = d_e5
@@ -122,10 +121,10 @@ def format_result(r):
     return round(r*100, 2)
 
 
-def write_csv_v20(table, filename="v20.csv"):
+def write_csv_owod(table, filename="owod.csv"):
     with open(filename, "w") as f:
         w = csv.writer(f)
-        w.writerow(["dice pool", "successes required", "v20 difficulty", "success probability"])
+        w.writerow(["dice pool", "successes required", "owod difficulty", "success probability"])
         for n in table.keys():
             for s in table[n].keys():
                 for d in table[n][s].keys():
@@ -146,17 +145,17 @@ help_statement = f"description:\n\tConverts a VTM V20 roll into a 5E roll. Retur
                  f"usage:\n\tpython vtm_version_difficulty_mapping.py "\
                  f"<number of dice> <successes required> <difficulty>\n"
 
-if len(argv) == 1 or argv[1] == "-h" or argv[1] == "h":
+if len(argv) == 1 or argv[1] in ["h", "-h", "--help"]:
     print(help_statement)
     exit()
 
 try:
-    p_dist_v20 = get_p_dist_v20()
+    p_dist_owod = get_p_dist_owod()
     p_dist_e5 = get_p_dist_e5()
-    p_map = get_p_map(p_dist_v20, p_dist_e5)
+    p_map = get_p_map(p_dist_owod, p_dist_e5)
 
     if argv[1] == "--csv":
-        write_csv_v20(p_dist_v20)
+        write_csv_owod(p_dist_owod)
         write_csv_e5(p_dist_e5)
         exit()
 
@@ -170,7 +169,7 @@ try:
         f"\t\tdice: {n}\n"
         f"\t\trequired successes: {s}\n"
         f"\t\tdifficulty: {d}\n"
-        f"\tsuccess chance: {format_result(p_dist_v20[n][s][d])}%\n"
+        f"\tsuccess chance: {format_result(p_dist_owod[n][s][d])}%\n"
         f"5e\n"
         f"\tdifficulty: {p_map[n][s][d]}\n"
         f"\tsuccess chance: {format_result(p_dist_e5[n][p_map[n][s][d]])}%\n"
