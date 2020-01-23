@@ -212,11 +212,12 @@ git clone https://github.com/g-sys-v2/vtm-version-difficulty-mapping.git
 python vtm_version_difficulty_mapping.py [-n number_of_dice -s required_successes -d owod_difficulty] | [--csv] | [-h | --help]
 
 options
-    -n: Number of dice being rolled in the OWOD roll
-    -s: Number of successes required in the OWOD roll
-    -d: OWOD Difficulty rating for the OWOD roll
-    -w, --write: Write all tables out as local CSV files
-    -h, --help: Print help statement
+    -n: Number of dice being rolled in the OWOD roll.
+    -s: Number of successes required in the OWOD roll.
+    -d: OWOD Difficulty rating for the OWOD roll.
+    -N: Maximum dice pool size for tabulation. Will default to n if -n is specified is greater. 
+    -w, --write: Write all tables out as local CSV files.
+    -h, --help: Print help statement.
 ```
 
 The program will return the input parameters as well as the 
