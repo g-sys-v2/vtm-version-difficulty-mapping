@@ -215,7 +215,7 @@ options
     -n: Number of dice being rolled in the OWOD roll
     -s: Number of successes required in the OWOD roll
     -d: OWOD Difficulty rating for the OWOD roll
-    --csv: Write all tables out as local CSV files
+    -w, --write: Write all tables out as local CSV files
     -h, --help: Print help statement
 ```
 

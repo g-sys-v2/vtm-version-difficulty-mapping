@@ -181,7 +181,7 @@ d = None
 if len(argv) == 1 or any(arg in argv for arg in ["h", "-h", "--help"]):
     print(help_statement)
     exit()
-if "--csv" in argv:
+if any(arg in argv for arg in ["-w", "--write"]):
     write = True
 if all(arg in argv for arg in ["-n", "-s", "-d"]):
     n = int(argv[argv.index("-n")+1])
